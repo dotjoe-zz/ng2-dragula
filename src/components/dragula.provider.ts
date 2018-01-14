@@ -66,7 +66,7 @@ export class DragulaService {
         return;
       }
       sourceModel = drake.models[drake.containers.indexOf(source)];
-      sourceModel.splice(dragIndex, 1);
+      this.splice(sourceModel, dragIndex, 1);
       // console.log('REMOVE');
       // console.log(sourceModel);
       this.removeModel.emit([name, el, source]);
@@ -84,20 +84,48 @@ export class DragulaService {
       // console.log('DROP');
       // console.log(sourceModel);
       if (target === source) {
-        sourceModel.splice(dropIndex, 0, sourceModel.splice(dragIndex, 1)[0]);
+        this.splice(sourceModel, dropIndex, 0, this.splice(sourceModel, dragIndex, 1)[0]);
       } else {
         let notCopy = dragElm === dropElm;
         let targetModel = drake.models[drake.containers.indexOf(target)];
-        let dropElmModel = notCopy ? sourceModel[dragIndex] : JSON.parse(JSON.stringify(sourceModel[dragIndex]));
+        let dropElmModel = notCopy ? this.getItem(sourceModel, dragIndex) : JSON.parse(JSON.stringify(this.getItem(sourceModel, dragIndex)));
 
         if (notCopy) {
-          sourceModel.splice(dragIndex, 1);
+          this.splice(sourceModel, dragIndex, 1);
         }
-        targetModel.splice(dropIndex, 0, dropElmModel);
+        this.splice(targetModel, dropIndex, 0, dropElmModel);
         target.removeChild(dropElm); // element must be removed for ngFor to apply correctly
       }
       this.dropModel.emit([name, dropElm, target, source]);
     });
+  }
+
+  private getItem(model: any | any[], index: number): any {
+    return this.isFormArray(model) ? model.at(index) : model[index];
+  }
+
+  private splice(model: any | any[], start: number, deleteCount: number, ...items: any[]): any[] {
+    if (!this.isFormArray(model)) {
+      return model.splice(start, deleteCount, items);
+    }
+
+    //FormArray splice
+    let deleted = [];
+
+    for (let i = start + deleteCount - 1; i >= start; i--) {
+      deleted.push(model.at(i));
+      model.removeAt(i);
+    }
+
+    for (let i = start, j = 0; j < items.length; i++, j++) {
+      model.insert(i, items[j]);
+    }
+
+    return deleted.reverse();
+  }
+
+  private isFormArray(model: any | any[]): boolean {
+    return !!model.at && !!model.insert && !!model.removeAt;
   }
 
   private setupEvents(bag: any): void {
