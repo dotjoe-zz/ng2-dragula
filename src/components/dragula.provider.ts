@@ -106,7 +106,7 @@ export class DragulaService {
 
   private splice(model: any | any[], start: number, deleteCount: number, ...items: any[]): any[] {
     if (!this.isFormArray(model)) {
-      return model.splice(start, deleteCount, items);
+      return model.splice(start, deleteCount, ...items);
     }
 
     //FormArray splice
