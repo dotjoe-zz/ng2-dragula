@@ -73,13 +73,13 @@ export class DragulaService {
     });
     drake.on('drag', (el: any, source: any) => {
       dragElm = el;
-      dragIndex = this.domIndexOf(el, source);
+      dragIndex = this.domIndexOf(el, source, drake);
     });
     drake.on('drop', (dropElm: any, target: any, source: any) => {
       if (!drake.models || !target) {
         return;
       }
-      dropIndex = this.domIndexOf(dropElm, target);
+      dropIndex = this.domIndexOf(dropElm, target, drake);
       sourceModel = drake.models[drake.containers.indexOf(source)];
       // console.log('DROP');
       // console.log(sourceModel);
@@ -142,7 +142,15 @@ export class DragulaService {
     this.events.forEach(emitter);
   }
 
-  private domIndexOf(child: any, parent: any): any {
-    return Array.prototype.indexOf.call(parent.children, child);
+  private domIndexOf(child: any, parent: any, drake: any): any {
+    const domIndex = Array.prototype.indexOf.call(parent.children, child);
+
+    //our DOM elements might be virtualized so we need to get actual index from the model which will track it's offset
+    const model = drake.models[drake.containers.indexOf(parent)];
+    if (model && model.translateDomIndex) {
+      return model.translateDomIndex(domIndex);
+    }       
+
+    return domIndex;
   }
 }
