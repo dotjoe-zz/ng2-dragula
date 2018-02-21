@@ -39,6 +39,8 @@ export class DragulaDirective implements OnInit, OnChanges {
       checkModel();
       this.dragulaService.add(this.dragula, this.drake);
     }
+
+    //console.log('#Dragula-Directive:init:', this.drake.containers.length, this.drake.models && this.drake.models.length);
   }
 
   public ngOnChanges(changes: {dragulaModel?: SimpleChange}): void {
@@ -52,6 +54,20 @@ export class DragulaDirective implements OnInit, OnChanges {
         } else {
           this.drake.models = [changes.dragulaModel.currentValue];
         }
+      }
+    }
+  }
+
+  public ngOnDestroy() {
+    if (this.drake) {
+      const idx = this.drake.containers.indexOf(this.container);
+      if (idx >= 0) {
+        this.drake.containers.splice(idx, 1);
+
+        if (this.drake.models) {
+          this.drake.models.splice(idx, 1);
+        }
+        //console.log('#Dragula-Directive:destroy:container-index', idx);
       }
     }
   }
