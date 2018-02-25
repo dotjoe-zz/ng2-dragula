@@ -59,8 +59,18 @@ export class DragulaService {
   private handleModels(name: string, drake: any): void {
     let dragElm: any;
     let dragIndex: number;
+    let dragModel: any;
     let dropIndex: number;
     let sourceModel: any;
+
+    drake.on('dragend', (el:any) => {
+      this.setDragIndex(dragModel, -1);
+    });
+    drake.on('cancel', (el:any, source:any) => {
+      if (this.isVirtualizedDrag(dragModel)) {
+        source.removeChild(el); // element must be removed from ngFor to apply correctly
+      }
+    });
     drake.on('remove', (el: any, source: any) => {
       if (!drake.models) {
         return;
@@ -74,6 +84,8 @@ export class DragulaService {
     drake.on('drag', (el: any, source: any) => {
       dragElm = el;
       dragIndex = this.domIndexOf(el, source, drake);
+      dragModel = drake.models[drake.containers.indexOf(source)];
+      this.setDragIndex(dragModel, dragIndex);
     });
     drake.on('drop', (dropElm: any, target: any, source: any) => {
       if (!drake.models || !target) {
@@ -84,8 +96,14 @@ export class DragulaService {
       // console.log('DROP');
       // console.log(sourceModel);
       if (target === source) {
+        if (this.isVirtualizedDrag(sourceModel)) {
+          source.removeChild(dropElm); // element must be removed for ngFor to apply correctly
+        }
+
         this.splice(sourceModel, dropIndex, 0, this.splice(sourceModel, dragIndex, 1)[0]);
       } else {
+        target.removeChild(dropElm); // element must be removed for ngFor to apply correctly
+
         let notCopy = dragElm === dropElm;
         let targetModel = drake.models[drake.containers.indexOf(target)];
         let dropElmModel = notCopy ? this.getItem(sourceModel, dragIndex) : JSON.parse(JSON.stringify(this.getItem(sourceModel, dragIndex)));
@@ -94,7 +112,6 @@ export class DragulaService {
           this.splice(sourceModel, dragIndex, 1);
         }
         this.splice(targetModel, dropIndex, 0, dropElmModel);
-        target.removeChild(dropElm); // element must be removed for ngFor to apply correctly
       }
       this.dropModel.emit([name, dropElm, target, source]);
     });
@@ -152,5 +169,23 @@ export class DragulaService {
     }       
 
     return domIndex;
+  }
+
+  /**
+   * @param model Must check for a virtual drag so we know to remove the dropElement (so we don't orphan it in the ngFor)
+   */
+  private isVirtualizedDrag(model: any) {
+    return model && model.virtualizedDrag;
+  }
+
+  /**
+   * Let the model know about the currently dragged index so it can update it's virtualizedDrag property.
+   * @param model 
+   * @param index 
+   */
+  private setDragIndex(model: any, index: number) {
+    if (model && model.setDragIndex) {
+      model.setDragIndex(index);
+    }
   }
 }
