@@ -68,7 +68,7 @@ export class DragulaService {
     });
     drake.on('cancel', (el:any, source:any) => {
       if (this.isVirtualizedDrag(dragModel)) {
-        source.removeChild(el); // element must be removed from ngFor to apply correctly
+        this.removeElement(el); // element must be removed for ngFor to apply correctly
       }
     });
     drake.on('remove', (el: any, source: any) => {
@@ -97,12 +97,12 @@ export class DragulaService {
       // console.log(sourceModel);
       if (target === source) {
         if (this.isVirtualizedDrag(sourceModel)) {
-          source.removeChild(dropElm); // element must be removed for ngFor to apply correctly
+          this.removeElement(dropElm); // element must be removed for ngFor to apply correctly
         }
 
         this.splice(sourceModel, dropIndex, 0, this.splice(sourceModel, dragIndex, 1)[0]);
       } else {
-        target.removeChild(dropElm); // element must be removed for ngFor to apply correctly
+        this.removeElement(dropElm); // element must be removed for ngFor to apply correctly
 
         let notCopy = dragElm === dropElm;
         let targetModel = drake.models[drake.containers.indexOf(target)];
@@ -187,5 +187,9 @@ export class DragulaService {
     if (model && model.setDragIndex) {
       model.setDragIndex(index);
     }
+  }
+
+  private removeElement(el: Element) {
+    el.parentNode && el.parentNode.removeChild(el);
   }
 }
